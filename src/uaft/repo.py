@@ -34,6 +34,9 @@ def init_repo():
     console.print("[bold]Initializing Git repository...[/bold]")
     run_command("git init")
     
+    # Rename default branch to 'mother'
+    run_command("git branch -m mother")
+    
     # Check for .gitignore, create if missing
     if not os.path.exists(".gitignore"):
         console.print("Creating default .gitignore...")
@@ -107,6 +110,12 @@ def run_repo(args):
         init_repo()
         
     elif command == "create":
+        if not check_gh_cli():
+            console.print("[red]Error: GitHub CLI (gh) is required for this command.[/red]")
+            console.print("Please install it: https://cli.github.com/")
+            console.print("Then login with: gh auth login")
+            sys.exit(1)
+
         visibility = "public"
         if "--private" in args:
             visibility = "private"

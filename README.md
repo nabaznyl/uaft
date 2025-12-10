@@ -1,5 +1,8 @@
 # UAFT - Universal Automation Framework Tool
 
+[![PyPI version](https://badge.fury.io/py/uaft.svg)](https://badge.fury.io/py/uaft)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **The "Make" for the modern era.** A lightweight, configuration-driven, and extensible automation framework designed to standardize workflows across any project.
 
 ## 🚀 Features
@@ -8,6 +11,7 @@
 - **Plugin Architecture**: Extend functionality with any script (Bash, Python, etc.) via `uaft plugin`.
 - **Smart Defaults**: Built-in support for `fix` (formatting), `cleanup` (artifacts), and `test` (execution & tracking).
 - **Zero Dependencies**: Pure Python standard library. No `pip install` heavy deps required.
+- **Automation Tools**: Built-in `uaft publish` for PyPI and `uaft repo` for Git management.
 
 ## 📦 Installation
 
@@ -82,6 +86,8 @@ Control everything via `uaft.json`.
 | `uaft test` | Run the test suite. Use `--track` to log results. |
 | `uaft plugin` | Manage external plugins (install, list). |
 | `uaft hooks` | Manage git hooks. |
+| `uaft publish` | Build and publish the package to PyPI. |
+| `uaft repo` | Manage the git repository and GitHub integration. |
 
 ## 🤝 Contributing
 
