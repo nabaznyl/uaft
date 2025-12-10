@@ -143,7 +143,7 @@ def main():
         sys.exit(0)
 
     if command in ["version", "--version", "-v"]:
-        print("UAFT v0.2.0")
+        print("UAFT v0.3.0")
         sys.exit(0)
 
     if command == "task":
