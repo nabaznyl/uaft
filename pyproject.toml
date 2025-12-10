@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "uaft"
-version = "0.3.0"
+version = "0.2.1"
 description = "Universal Automation Framework Tool"
 readme = "README.md"
 requires-python = ">=3.8"
