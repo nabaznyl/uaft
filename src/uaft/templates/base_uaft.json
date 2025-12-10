@@ -1,0 +1,48 @@
+{
+  "version": 1.0,
+  "project": "my-new-project",
+  "fix": {
+    "python": [
+      "black .",
+      "isort ."
+    ],
+    "node": [
+      "npm run lint:fix"
+    ],
+    "bash": [
+      "shfmt -w ."
+    ]
+  },
+  "cleanup": [
+    "**/__pycache__",
+    "**/*.pyc",
+    "**/*.egg-info",
+    "dist/",
+    "build/",
+    ".pytest_cache",
+    ".coverage",
+    "node_modules"
+  ],
+  "test": {
+    "command": "pytest",
+    "args": [
+      "-v"
+    ]
+  },
+  "build": {
+    "description": "Build project artifacts",
+    "commands": [
+      "echo 'Building...'",
+      "# python -m build",
+      "# npm run build"
+    ]
+  },
+  "start": {
+    "description": "Start the development server",
+    "commands": [
+      "echo 'Starting...'",
+      "# python main.py",
+      "# npm start"
+    ]
+  }
+}

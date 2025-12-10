@@ -1,0 +1,35 @@
+#!/bin/bash
+# Post-merge hook: Auto-clean merged branches
+# Installed by UAFT
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${YELLOW}[post-merge] Running branch cleanup...${NC}"
+
+# Count deleted branches
+DELETED=0
+
+# Delete fully merged local branches (except current branch)
+while IFS= read -r branch; do
+    if [[ "$branch" != "*" ]]; then
+        git branch -d "$branch" 2>/dev/null && ((DELETED++)) || true
+    fi
+done < <(git branch --merged)
+
+# Clean up remote tracking branches
+git remote prune origin 2>/dev/null || true
+
+# Report results
+if [ "$DELETED" -gt 0 ]; then
+    echo -e "${GREEN}[post-merge] Cleaned $DELETED merged branches${NC}"
+else
+    echo -e "${GREEN}[post-merge] No merged branches to clean${NC}"
+fi
+
+exit 0

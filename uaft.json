@@ -1,0 +1,19 @@
+{
+  "version": 1.0,
+  "project": "uaft",
+  "fix": [
+    "./.venv/bin/black src/ tests/"
+  ],
+  "cleanup": [
+    "**/__pycache__",
+    "**/*.pyc",
+    ".pytest_cache",
+    "build/",
+    "dist/",
+    "*.egg-info"
+  ],
+  "test": {
+    "command": "./.venv/bin/pytest",
+    "args": ["-v"]
+  }
+}
