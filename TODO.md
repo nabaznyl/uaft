@@ -5,6 +5,12 @@
 - [ ] **Remote Plugins**: Implement URL-based plugin installation.
 - [ ] **Documentation**: Create comprehensive user guide for v0.2.0.
 
+## Completed (v0.2.1)
+- [x] **PyPI Automation**: Implemented `uaft publish`.
+- [x] **Git Automation**: Implemented `uaft repo` (init, create, push).
+- [x] **Documentation**: Added standard OSS files (LICENSE, CONTRIBUTING, etc.).
+- [x] **Branching**: Standardized on `mother` branch.
+
 ## Completed (v0.2.0)
 - [x] **Zero-Dependency Refactor**: Removed all external deps.
 - [x] **JSON Config**: Switched to `uaft.json`.

@@ -11,9 +11,10 @@
 - [x] **Watch Mode v1**: Basic polling-based file watcher.
 
 ## Phase 2: Integration & Expansion (Q1 2026)
+- [x] **Git Integration**: Built-in git hook management, repo creation, and status checks.
+- [x] **PyPI Integration**: Automated build and publish workflow (`uaft publish`).
 - [ ] **Remote Plugins**: Support installing plugins from URLs (e.g., `uaft plugin install https://...`).
 - [ ] **Interactive Mode**: A simple TUI for selecting tasks (using standard library `curses` or raw input).
-- [ ] **Git Integration**: Built-in git hook management and status checks.
 
 ## Phase 3: Ecosystem (Q2 2026)
 - [ ] **Language Templates**: `uaft init --lang python`, `uaft init --lang node` (Enhanced).
