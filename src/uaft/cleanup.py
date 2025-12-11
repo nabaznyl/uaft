@@ -3,6 +3,9 @@ import shutil
 import glob
 from uaft.utils import Console, Colors
 from uaft.config import load_config
+import logging
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -76,7 +79,7 @@ def run_cleanup(dry_run: bool = False):
                         results[cat] += 1
                         total_removed += 1
                     except OSError as e:
-                        console.print(f"[red]Error removing {path}: {e}[/red]")
+                        console.logger.info(f"[red]Error removing {path}: {e}[/red]")
                 else:
                     results[cat] += 1
                     total_removed += 1
@@ -94,23 +97,23 @@ def run_cleanup(dry_run: bool = False):
                         results[cat] += 1
                         total_removed += 1
                     except OSError as e:
-                        console.print(f"[red]Error removing {path}: {e}[/red]")
+                        console.logger.info(f"[red]Error removing {path}: {e}[/red]")
                 else:
                     results[cat] += 1
                     total_removed += 1
 
     # Simple table output replacement
-    print(f"\n{Colors.HEADER}UAFT Cleanup Summary{Colors.ENDC}")
-    print(f"{'Category':<20} {'Status':<15} {'Count':<10}")
-    print("-" * 45)
+    logger.info(f"\n{Colors.HEADER}UAFT Cleanup Summary{Colors.ENDC}")
+    logger.info(f"{'Category':<20} {'Status':<15} {'Count':<10}")
+    logger.info("-" * 45)
 
     for cat, count in results.items():
         status = "Would Remove" if dry_run else "Removed"
         if count > 0:
-            print(f"{cat:<20} {status:<15} {count:<10}")
+            logger.info(f"{cat:<20} {status:<15} {count:<10}")
 
     if total_removed == 0:
-        console.print(f"{Colors.YELLOW}Nothing to clean.{Colors.ENDC}")
+        console.logger.info(f"{Colors.YELLOW}Nothing to clean.{Colors.ENDC}")
     else:
         if dry_run:
             console.print(
