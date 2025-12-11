@@ -2,11 +2,11 @@ import os
 import shutil
 import glob
 from uaft.utils import Console, Colors
+from uaft.progress import TaskRunner
 from uaft.config import load_config
 import logging
 
 logger = logging.getLogger(__name__)
-
 console = Console()
 
 DEFAULT_CLEANUP_TARGETS = [
@@ -35,91 +35,76 @@ DEFAULT_CLEANUP_TARGETS = [
 
 
 def run_cleanup(dry_run: bool = False):
-    """Clean up project artifacts."""
-
+    """Clean up project artifacts with progress tracking."""
     config = load_config()
     targets = config.get("cleanup", DEFAULT_CLEANUP_TARGETS)
 
     total_removed = 0
-
-    # Group by category for display
     categories = {
-        "Python Cache": [
-            "__pycache__",
-            ".pyc",
-            ".pyo",
-            ".pyd",
-            ".pytest_cache",
-            ".mypy_cache",
-        ],
+        "Python Cache": ["__pycache__", ".pyc", ".pyo", ".pyd", ".pytest_cache", ".mypy_cache"],
         "Build Artifacts": ["dist", "build", ".egg-info"],
         "Logs & Temp": [".log", "logs", ".tmp", ".temp", "tmp"],
         "Coverage": [".coverage", "htmlcov", ".benchmarks"],
     }
-
     results = {cat: 0 for cat in categories}
     results["Other"] = 0
 
+    # Collect all items first
+    items_to_remove = []
     for pattern in targets:
-        # Recursive glob
         matches = glob.glob(pattern, recursive=True)
-
         for path in matches:
-            if os.path.isdir(path):
-                # Check which category
+            if os.path.isdir(path) or os.path.isfile(path):
                 cat = "Other"
                 for c, pats in categories.items():
                     if any(p in path for p in pats):
                         cat = c
                         break
+                items_to_remove.append((path, cat))
 
-                if not dry_run:
-                    try:
+    # Create task runner
+    runner = TaskRunner(f"🧹 Cleanup {'(DRY-RUN)' if dry_run else ''}")
+    
+    def remove_items():
+        """Remove collected items."""
+        for idx, (path, category) in enumerate(items_to_remove, 1):
+            try:
+                if os.path.isdir(path):
+                    if not dry_run:
                         shutil.rmtree(path)
-                        results[cat] += 1
-                        total_removed += 1
-                    except OSError as e:
-                        console.logger.info(f"[red]Error removing {path}: {e}[/red]")
-                else:
-                    results[cat] += 1
-                    total_removed += 1
-
-            elif os.path.isfile(path):
-                cat = "Other"
-                for c, pats in categories.items():
-                    if any(p in path for p in pats):
-                        cat = c
-                        break
-
-                if not dry_run:
-                    try:
+                    results[category] += 1
+                elif os.path.isfile(path):
+                    if not dry_run:
                         os.remove(path)
-                        results[cat] += 1
-                        total_removed += 1
-                    except OSError as e:
-                        console.logger.info(f"[red]Error removing {path}: {e}[/red]")
-                else:
-                    results[cat] += 1
-                    total_removed += 1
+                    results[category] += 1
+            except OSError as e:
+                logger.warning(f"Error removing {path}: {e}")
+        
+        return len(items_to_remove)
 
-    # Simple table output replacement
-    logger.info(f"\n{Colors.HEADER}UAFT Cleanup Summary{Colors.ENDC}")
-    logger.info(f"{'Category':<20} {'Status':<15} {'Count':<10}")
-    logger.info("-" * 45)
-
-    for cat, count in results.items():
-        status = "Would Remove" if dry_run else "Removed"
-        if count > 0:
-            logger.info(f"{cat:<20} {status:<15} {count:<10}")
-
-    if total_removed == 0:
-        console.logger.info(f"{Colors.YELLOW}Nothing to clean.{Colors.ENDC}")
+    if items_to_remove:
+        runner.add_task(
+            f"Remove {len(items_to_remove)} artifacts",
+            remove_items
+        )
+        runner.run()
     else:
-        if dry_run:
-            console.print(
-                f"\n{Colors.YELLOW}Dry run complete. Found {total_removed} items to remove.{Colors.ENDC}"
-            )
-        else:
-            console.print(
-                f"\n[green]Cleanup complete. Removed {total_removed} items.[/green]"
-            )
+        print(f"{Colors.YELLOW}ℹ️  Nothing to clean.{Colors.ENDC}\n")
+        return
+
+    # Display summary
+    print(f"\n{Colors.HEADER}📊 Cleanup Summary{Colors.ENDC}")
+    print(f"{'Category':<20} {'Status':<20} {'Count':<10}")
+    print("-" * 50)
+    
+    total = 0
+    for cat, count in results.items():
+        if count > 0:
+            status = "Would Remove" if dry_run else "Removed"
+            print(f"{cat:<20} {status:<20} {count:<10}")
+            total += count
+
+    if dry_run:
+        print(f"\n{Colors.YELLOW}ℹ️  Dry run complete. Found {total} items to remove.{Colors.ENDC}\n")
+    else:
+        print(f"\n{Colors.GREEN}✅ Cleanup complete. Removed {total} items.{Colors.ENDC}\n")

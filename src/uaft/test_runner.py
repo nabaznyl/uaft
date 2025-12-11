@@ -3,6 +3,7 @@ import subprocess
 import os
 from typing import List
 from uaft.utils import Console, Colors
+from uaft.progress import TaskRunner
 from uaft.tracker import track_result
 from uaft.config import load_config
 
@@ -10,12 +11,10 @@ console = Console()
 
 
 def run_tests(args: List[str]):
-    """Run tests with optional flags."""
-    # Load config to determine base command
+    """Run tests with optional flags and progress tracking."""
     config = load_config()
     test_config = config.get("test", {})
 
-    # Default to pytest if not configured
     base_cmd = "pytest"
     base_args = []
 
@@ -29,14 +28,12 @@ def run_tests(args: List[str]):
 
     cmd = [base_cmd] + base_args
 
-    # Parse our flags and pass others to pytest
     if "--parallel" in args:
         cmd.append("-n")
         cmd.append("auto")
         args.remove("--parallel")
 
     if "--json" in args:
-        # Extract value
         try:
             idx = args.index("--json")
             json_file = args[idx + 1]
@@ -52,7 +49,6 @@ def run_tests(args: List[str]):
         should_track = True
         args.remove("--track")
 
-    # Pass through remaining args (like test paths)
     cmd.extend(args)
 
     is_dry_run = False
@@ -61,53 +57,50 @@ def run_tests(args: List[str]):
         if "--dry-run" in cmd:
             cmd.remove("--dry-run")
 
-    console.print(f"{Colors.CYAN}Running tests:{Colors.ENDC} {' '.join(cmd)}")
+    console.print(f"{Colors.CYAN}🧪 Testing Configuration:{Colors.ENDC}\n")
+    print(f"  • Command: {' '.join(cmd)}")
+    print(f"  • Mode: {'DRY-RUN' if is_dry_run else 'EXECUTE'}")
+    print()
 
     if is_dry_run:
+        print(f"{Colors.YELLOW}ℹ️  DRY-RUN: No tests executed{Colors.ENDC}\n")
         return
 
-    if is_dry_run:
-        return
-
-    try:
-        ret = subprocess.run(cmd).returncode
-    except FileNotFoundError:
-        # Fallback logic for pytest
-        if base_cmd == "pytest":
-            console.print(f"[yellow]Warning: 'pytest' not found. Falling back to built-in 'unittest'.[/yellow]")
-            # Construct unittest command
-            # We need to handle args carefully. unittest discover doesn't take -v the same way as pytest
-            # but -v is supported.
-            fallback_cmd = [sys.executable, "-m", "unittest", "discover"]
-            
-            # Add verbose if present in original args
-            if "-v" in cmd or "--verbose" in cmd:
-                fallback_cmd.append("-v")
+    # Create task runner for test execution
+    runner = TaskRunner("Test Execution")
+    
+    def execute_tests():
+        """Execute the test command."""
+        try:
+            ret = subprocess.run(cmd).returncode
+            return ret
+        except FileNotFoundError:
+            if base_cmd == "pytest":
+                console.print(f"[yellow]⚠ 'pytest' not found. Falling back to unittest.[/yellow]")
+                fallback_cmd = [sys.executable, "-m", "unittest", "discover"]
                 
-            # Add start directory if provided in args (simple heuristic)
-            # Filter out flags from args to find paths
-            paths = [arg for arg in args if not arg.startswith("-")]
-            if paths:
-                # unittest discover takes -s start_dir
-                fallback_cmd.extend(["-s", paths[0]])
-            
-            console.print(f"{Colors.CYAN}Running fallback:{Colors.ENDC} {' '.join(fallback_cmd)}")
-            try:
-                ret = subprocess.run(fallback_cmd).returncode
-            except Exception as e:
-                console.print(f"[red]Error running fallback tests: {e}[/red]")
-                sys.exit(1)
-        else:
-            console.print(f"[red]Error: Command '{base_cmd}' not found. Is it installed?[/red]")
-            sys.exit(1)
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Tests interrupted.[/yellow]")
-        sys.exit(130)
+                if "-v" in cmd or "--verbose" in cmd:
+                    fallback_cmd.append("-v")
+                
+                paths = [arg for arg in args if not arg.startswith("-")]
+                if paths:
+                    fallback_cmd.extend(["-s", paths[0]])
+                
+                console.print(f"{Colors.CYAN}Running fallback:{Colors.ENDC} {' '.join(fallback_cmd)}")
+                return subprocess.run(fallback_cmd).returncode
+            else:
+                raise RuntimeError(f"Command '{base_cmd}' not found")
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Tests interrupted by user[/yellow]")
+            sys.exit(130)
+
+    runner.add_task("Execute tests", execute_tests)
+    success = runner.run()
 
     if should_track:
         project_name = os.path.basename(os.getcwd())
-        status = "pass" if ret == 0 else "fail"
-        details = "Tests passed" if ret == 0 else "Tests failed"
+        status = "pass" if success else "fail"
+        details = "Tests executed successfully" if success else "Tests had failures"
         track_result(project_name, status, details)
 
-    sys.exit(ret)
+    sys.exit(0 if success else 1)
