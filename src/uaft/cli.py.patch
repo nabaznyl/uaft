@@ -1,0 +1,20 @@
+--- a/src/uaft/cli.py
++++ b/src/uaft/cli.py
+@@ -10,6 +10,7 @@ from uaft.test_runner import TestRunner
+ from uaft.cleanup import Cleanup
+ from uaft.watch import Watch
+ from uaft.progress import ProgressBar, TaskRunner
++from uaft.auto_update import check_for_updates
+ 
+ __version__ = "0.2.1"
+ 
+@@ -130,6 +131,9 @@ def main():
+ def main():
+     """Main entry point"""
+     args = sys.argv[1:]
++
++    # Check for updates (cached, runs max once per day)
++    check_for_updates(__version__)
+     
+     if len(args) < 1:
+         show_help()

@@ -131,6 +131,10 @@ def run_task(task_name: str):
 
 def main():
     """Main entry point"""
+    # Check for updates (cached, runs max once per day)
+    from uaft.auto_update import check_for_updates
+    check_for_updates(__version__)
+    
     args = sys.argv[1:]
     if len(args) < 1:
         show_help()
